@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlacaPix Creator</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Gerador de PlacaPix</h1>
+            <p>Obtenha eficiência</p>
+        </div>
+        <form method="POST" enctype="multipart/form-data" action="/generate">
+            <div class="form-grid">
+                {% for i in range(6) %}
+                <div class="input-group">
+                    <input type="text" name="names" placeholder="Nome">
+                    <input type="text" name="keys" placeholder="Chave Pix">
+                    <label class="file-input-label" for="fileInput{{ i }}">Escolher Arquivo</label>
+                    <input type="file" class="file-input" id="fileInput{{ i }}" name="qrcodes">
+                    <span id="fileName{{ i }}" class="file-name">Nenhum arquivo escolhido</span>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="submit-container">
+                <input type="submit" value="Gerar PDF">
+            </div>
+        </form>
+    </div>
+    <script src="{{ url_for('static', filename='scripts.js') }}"></script>
+</body>
+</html>

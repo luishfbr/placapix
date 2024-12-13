@@ -47,4 +47,4 @@ ENV PORT 80
 ENV HOSTNAME "0.0.0.0"
 
 # Run the nextjs app on port 80
-CMD ["node", ".next/standalone/server.js"]
+CMD ["node", "server.js"]

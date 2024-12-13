@@ -25,7 +25,7 @@ services:
     environment:
       - DATABASE_URL=postgresql://postgres:root@db:5432/postgres
     expose:
-      - "80"
+      - "80:80"
     networks:
       - db
     depends_on:

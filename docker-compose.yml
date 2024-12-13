@@ -23,14 +23,14 @@ services:
 
   placapix:
     build:
-      context: ./
+      context: ./ 
       dockerfile: Dockerfile
     container_name: placapix
     restart: always
     environment:
       DATABASE_URL: postgres://postgres:root@db:5432/postgres
     ports:
-      - "80:80"  # Expondo a porta 80
+      - "80:80"
     networks:
       - db
     depends_on:

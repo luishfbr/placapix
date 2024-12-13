@@ -17,7 +17,6 @@ WORKDIR /app
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY . . 
-
 RUN npm run build
 
 ### Production image runner ###
@@ -35,11 +34,19 @@ RUN adduser -SDH nextjs
 RUN mkdir .next
 RUN chown nextjs:nodejs .next
 
-# Automatically leverage output traces to reduce image size
+# Copy application files
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./ 
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
+# Copie o script de inicialização para o container
+COPY start.sh /app/start.sh
+
+# Execute chmod como root antes de mudar para nextjs
+USER root
+RUN chmod +x /app/start.sh
+
+# Mude de volta para o usuário 'nextjs'
 USER nextjs
 
 # Exposed port (for orchestrators and dynamic reverse proxies)
@@ -47,8 +54,5 @@ EXPOSE 80
 ENV PORT 80
 ENV HOSTNAME "0.0.0.0"
 
-# Copie o script de inicialização para o container
-COPY start.sh /app/start.sh
-
-# Defina o script para ser executado ao iniciar o contêiner
-CMD ["sh", "-c", "chmod +x /app/start.sh && /app/start.sh"]
+# Run the application
+CMD ["/app/start.sh"]

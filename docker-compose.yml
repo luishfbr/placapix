@@ -23,7 +23,7 @@ services:
       context: .
       dockerfile: Dockerfile
     environment:
-      - DATABASE_URL="postgresql://postgres:root@db:5432/postgres"
+      - DATABASE_URL=postgresql://postgres:root@db:5432/postgres
     expose:
       - "80"
     networks:

@@ -7,8 +7,9 @@ RUN apk add --no-cache libc6-compat git
 # Setup npm environment
 WORKDIR /app
 
-COPY package.json package-lock.json ./ 
-COPY ./prisma /app/prisma
+COPY package*.json ./
+COPY tsconfig.json ./
+COPY prisma ./prisma/
 RUN npm ci
 
 # Builder

@@ -7,7 +7,7 @@ RUN apk add --no-cache libc6-compat git
 # Setup npm environment
 WORKDIR /app
 
-COPY package.json package-lock.json ./
+COPY package.json package-lock.json ./ 
 RUN npm ci
 
 # Builder
@@ -17,6 +17,7 @@ WORKDIR /app
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY . . 
+
 RUN npm run build
 
 ### Production image runner ###
@@ -48,7 +49,6 @@ ENV HOSTNAME "0.0.0.0"
 
 # Copie o script de inicialização para o container
 COPY start.sh /app/start.sh
-RUN chmod +x /app/start.sh
 
-# Modifique o comando para rodar o script de inicialização
-CMD ["/app/start.sh"]
+# Defina o script para ser executado ao iniciar o contêiner
+CMD ["sh", "-c", "chmod +x /app/start.sh && /app/start.sh"]

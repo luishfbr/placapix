@@ -1,48 +1,42 @@
-FROM node:22-slim AS base
+FROM node:22-alpine AS base
 
-ARG PORT=80
+FROM base AS deps
 
-ENV NEXT_TELEMETRY_DISABLED=1
+RUN apk add --no-cache libc6-compat
 
 WORKDIR /app
 
-# Dependencies
-FROM base AS dependencies
+COPY package.json ./
 
-COPY package.json package-lock.json ./ 
-RUN npm ci
+RUN npm update && npm install
 
-# Build
-FROM base AS build
-
-COPY --from=dependencies /app/node_modules ./node_modules
+FROM base AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-
-# Public build-time environment variables
-ARG NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
-ENV NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=$NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
 
 RUN npm run build
 
-# Run
-FROM base AS run
-
-ENV NODE_ENV=production
-ENV PORT=$PORT
+FROM base AS runner
+WORKDIR /app
+ENV NODE_ENV production
 
 RUN addgroup --system --gid 1001 nodejs
+
 RUN adduser --system --uid 1001 nextjs
-RUN mkdir -p /app/public  # Garante que o diretório public exista
+
+COPY --from=builder /app/public ./public
+
 RUN mkdir .next
 RUN chown nextjs:nodejs .next
 
-COPY --from=build /app/public ./public
-COPY --from=build --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=build --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 USER nextjs
 
-EXPOSE $PORT
+EXPOSE 80
 
-ENV HOSTNAME="0.0.0.0"
+ENV PORT 80
+
 CMD ["node", "server.js"]

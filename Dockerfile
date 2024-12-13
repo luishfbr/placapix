@@ -1,21 +1,50 @@
-FROM node:22-slim
+FROM node:22-alpine AS base
+
+FROM base AS deps
+
+RUN apk add --no-cache libc6-compat git
+
+ENV NPM_HOME="/npm"
+ENV PATH="$NPM_HOME:$PATH"
+RUN corepack enable
+RUN corepack prepare npm@latest --activate
 
 WORKDIR /app
 
-# Copiar apenas os arquivos necessários para instalação de dependências
-COPY package.json package-lock.json ./
+COPY package.json npm-lock.yaml ./
+RUN npm install --frozen-lockfile --prefer-frozen-lockfile
 
-# Instalar dependências
-RUN npm install
+FROM base AS builder
 
-# Copiar o restante do código e gerar o build
+RUN corepack enable
+RUN corepack prepare npm@latest --activate
+
+WORKDIR /app
+
+COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run build
 
-# Mover para standalone para otimização
-RUN mv /app/.next/standalone /standalone && mv /app/.next/static /standalone/static
+FROM base AS runner
 
-# Configurar a imagem final para execução
-WORKDIR /standalone
+ENV NODE_ENV production
+
+ENV NEXT_TELEMETRY_DISABLED 1
+
+RUN addgroup nodejs
+RUN adduser -SDH nextjs
+RUN mkdir .next
+RUN chown nextjs:nodejs .next
+
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+
+USER nextjs
+
 EXPOSE 80
+ENV PORT 80
+ENV HOSTNAME "0.0.0.0"
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 CMD [ "wget", "-q0", "http://localhost:80/health" ]
+
 CMD ["node", "server.js"]

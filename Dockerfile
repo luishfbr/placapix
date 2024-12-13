@@ -1,50 +1,47 @@
-FROM node:22-alpine AS base
+FROM node:22-slim AS base
 
-FROM base AS deps
+ARG PORT=80
 
-RUN apk add --no-cache libc6-compat git
-
-ENV NPM_HOME="/npm"
-ENV PATH="$NPM_HOME:$PATH"
-RUN corepack enable
-RUN corepack prepare npm@latest --activate
+ENV NEXT_TELEMETRY_DISABLED=1
 
 WORKDIR /app
 
-COPY package.json npm-lock.yaml ./
-RUN npm install --frozen-lockfile --prefer-frozen-lockfile
+# Dependencies
+FROM base AS dependencies
 
-FROM base AS builder
+COPY package.json package-lock.json ./
+RUN npm ci
 
-RUN corepack enable
-RUN corepack prepare npm@latest --activate
+# Build
+FROM base AS build
 
-WORKDIR /app
-
-COPY --from=deps /app/node_modules ./node_modules
+COPY --from=dependencies /app/node_modules ./node_modules
 COPY . .
+
+# Public build-time environment variables
+ARG NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+ENV NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=$NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+
 RUN npm run build
 
-FROM base AS runner
+# Run
+FROM base AS run
 
-ENV NODE_ENV production
+ENV NODE_ENV=production
+ENV PORT=$PORT
 
-ENV NEXT_TELEMETRY_DISABLED 1
-
-RUN addgroup nodejs
-RUN adduser -SDH nextjs
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
 RUN mkdir .next
 RUN chown nextjs:nodejs .next
 
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+COPY --from=build /app/public ./public
+COPY --from=build --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=build --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 USER nextjs
 
-EXPOSE 80
-ENV PORT 80
-ENV HOSTNAME "0.0.0.0"
-HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 CMD [ "wget", "-q0", "http://localhost:80/health" ]
+EXPOSE $PORT
 
+ENV HOSTNAME="0.0.0.0"
 CMD ["node", "server.js"]

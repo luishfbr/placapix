@@ -9,7 +9,7 @@ WORKDIR /app
 # Dependencies
 FROM base AS dependencies
 
-COPY package.json package-lock.json ./
+COPY package.json package-lock.json ./ 
 RUN npm ci
 
 # Build
@@ -32,11 +32,11 @@ ENV PORT=$PORT
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
+RUN mkdir -p /app/public  # Garante que o diretório public exista
 RUN mkdir .next
 RUN chown nextjs:nodejs .next
 
-RUN mkdir -p ./public
-COPY --from=build /app/public ./public || true
+COPY --from=build /app/public ./public
 COPY --from=build --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=build --chown=nextjs:nodejs /app/.next/static ./.next/static
 

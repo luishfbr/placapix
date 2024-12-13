@@ -28,10 +28,7 @@ services:
     environment:
       DATABASE_URL: postgres://postgres:root@db:5432/postgres
     ports:
-      - "80:80"
-    volumes:
-      - ./app
-      - /app/node_modules
+      - "3000:3000"
     networks:
       - db
     depends_on:

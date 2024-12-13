@@ -1,18 +1,4 @@
-  app:
-    image: openai-demo-app
-    build:
-      context: ./
-      target: dev
-      dockerfile: Dockerfile
-    volumes:
-      - .:/app
-      - /app/node_modules
-      - /app/.next
-    ports:
-      - "3000:3000"
-    networks:
-      - db  # Adicionando a rede aqui
-
+services:
   db:
     container_name: postgres
     image: postgres:latest
@@ -32,6 +18,19 @@
       interval: 30s
       timeout: 10s
       retries: 5
+  placapix:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - DATABASE_URL="postgresql://postgres:root@db:5432/postgres"
+    expose:
+      - "80"
+    networks:
+      - db
+    depends_on:
+      db:
+        condition: service_healthy
 
 networks:
   db:

@@ -14,29 +14,23 @@ interface Props {
 export function HistoricoDePlacas({ placas }: Props) {
   const handleDownload = async (placa: string) => {
     try {
-      // Converter a string Base64 para um Uint8Array
       const byteArray = Uint8Array.from(atob(placa), (char) =>
         char.charCodeAt(0)
       );
 
-      // Carregar o documento PDF com o pdf-lib
       const pdfDoc = await PDFDocument.load(byteArray);
 
-      // Salvar o PDF em um novo Blob
       const pdfBlob = await pdfDoc.save();
 
-      // Criar URL para o Blob
       const pdfUrl = URL.createObjectURL(
         new Blob([pdfBlob], { type: "application/pdf" })
       );
 
-      // Criar o link de download
       const link = document.createElement("a");
       link.href = pdfUrl;
       link.download = `placa_${new Date().toISOString()}.pdf`;
       link.click();
 
-      // Revogar o URL após o uso para liberar recursos
       URL.revokeObjectURL(pdfUrl);
     } catch (error) {
       console.error("Erro ao gerar o PDF:", error);
@@ -53,9 +47,12 @@ export function HistoricoDePlacas({ placas }: Props) {
       <DialogContent className="sm:max-w-[425px]">
         {placas.length > 0 ? (
           placas.map((placa) => (
-            <div key={placa.placa}>
-              <Button onClick={() => handleDownload(placa.placa)}>
-                {placa.createdAt.toLocaleString()}
+            <div key={placa.placa} className="flex flex-col gap-2 w-full">
+              <Button
+                className="w-full"
+                onClick={() => handleDownload(placa.placa)}
+              >
+                Criado em: {placa.createdAt.toLocaleString()}
               </Button>
             </div>
           ))

@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   db:
     container_name: postgres
@@ -28,7 +30,7 @@ services:
     environment:
       DATABASE_URL: postgres://postgres:root@db:5432/postgres
     ports:
-      - "80:80"
+      - "80:80"  # Expondo a porta 80
     networks:
       - db
     depends_on:

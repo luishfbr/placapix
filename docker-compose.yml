@@ -26,7 +26,7 @@ services:
     environment:
       - DATABASE_URL=postgresql://postgres:root@db:5432/postgres
     ports:
-      - "80:80"
+      - "3000:3000"
     networks:
       - db
     depends_on:

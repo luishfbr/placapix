@@ -1,60 +1,61 @@
+# Usar a imagem base do node
 FROM node:20-alpine AS base
 
 ### Dependencies ###
 FROM base AS deps
 RUN apk add --no-cache libc6-compat git
 
-# Setup npm environment
 WORKDIR /app
 
-COPY package*.json ./
-COPY tsconfig.json ./
+# Copiar os arquivos de dependências (package.json, tsconfig.json, prisma)
+COPY package*.json tsconfig.json ./
 COPY prisma ./prisma/
+
+# Instalar dependências
 RUN npm ci
 
-# Builder
+# Builder: Compilação do projeto
 FROM base AS builder
 
 WORKDIR /app
 
+# Copiar as dependências instaladas na camada anterior
 COPY --from=deps /app/node_modules ./node_modules
+# Copiar os outros arquivos necessários para o build
 COPY . . 
+
+# Construir o projeto Next.js
 RUN npm run build
 
-### Production image runner ###
+### Produção ###
 FROM base AS runner
 
-# Set NODE_ENV to production
-ENV NODE_ENV production
+# Definir o ambiente como produção
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
 
-# Disable Next.js telemetry
-ENV NEXT_TELEMETRY_DISABLED 1
+# Criação de usuário e grupo para evitar rodar como root
+RUN addgroup -S nodejs && adduser -S nextjs -G nodejs
 
-# Set correct permissions for nextjs user and don't run as root
-RUN addgroup nodejs
-RUN adduser -SDH nextjs
-RUN mkdir .next
-RUN chown nextjs:nodejs .next
+# Criar diretórios e dar permissão
+RUN mkdir .next && chown nextjs:nodejs .next
 
-# Copy application files
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./ 
+# Copiar o build gerado no estágio anterior
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
-# Copie o script de inicialização para o container
+# Copiar o script de inicialização
 COPY start.sh /app/start.sh
-
-# Execute chmod como root antes de mudar para nextjs
-USER root
 RUN chmod +x /app/start.sh
 
-# Mude de volta para o usuário 'nextjs'
+# Definir o usuário para execução do contêiner
 USER nextjs
 
-# Exposed port (for orchestrators and dynamic reverse proxies)
+# Expor a porta
 EXPOSE 80
 ENV PORT 80
 ENV HOSTNAME "0.0.0.0"
 
-# Run the application
+# Comando de inicialização
 CMD ["/app/start.sh"]

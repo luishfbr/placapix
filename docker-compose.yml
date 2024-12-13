@@ -18,13 +18,14 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
+
   placapix:
     build:
       context: .
       dockerfile: Dockerfile
     environment:
       - DATABASE_URL=postgresql://postgres:root@db:5432/postgres
-    expose:
+    ports:
       - "80:80"
     networks:
       - db
@@ -35,5 +36,6 @@ services:
 networks:
   db:
     driver: bridge
+
 volumes:
   db:

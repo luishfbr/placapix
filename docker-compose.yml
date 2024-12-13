@@ -21,12 +21,17 @@ services:
 
   placapix:
     build:
-      context: .
+      context: ./
       dockerfile: Dockerfile
+    container_name: placapix
+    restart: always
     environment:
-      - DATABASE_URL=postgresql://postgres:root@db:5432/postgres
+      DATABASE_URL: postgres://postgres:root@db:5432/postgres
     ports:
-      - "3000:3000"
+      - "443:443"
+    volumes:
+      - ./app
+      - /app/node_modules
     networks:
       - db
     depends_on:

@@ -46,5 +46,9 @@ EXPOSE 80
 ENV PORT 80
 ENV HOSTNAME "0.0.0.0"
 
-# Run the nextjs app on port 80
-CMD ["node", "server.js"]
+# Copie o script de inicialização para o container
+COPY start.sh /app/start.sh
+RUN chmod +x /app/start.sh
+
+# Modifique o comando para rodar o script de inicialização
+CMD ["/app/start.sh"]

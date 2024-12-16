@@ -44,15 +44,16 @@ export function HistoricoDePlacas({ placas }: Props) {
           <List /> Histórico
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[525px]">
         {placas.length > 0 ? (
           placas.map((placa) => (
             <div key={placa.placa} className="flex flex-col gap-2 w-full">
               <Button
-                className="w-full"
+                className="w-full mt-2"
                 onClick={() => handleDownload(placa.placa)}
               >
-                Criado em: {placa.createdAt.toLocaleString()}
+                Placa: {placa.name} Criado em:{" "}
+                {placa.createdAt.toLocaleString()}
               </Button>
             </div>
           ))

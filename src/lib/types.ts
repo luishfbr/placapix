@@ -7,4 +7,5 @@ interface Values {
   name: string;
   key: string;
   qtd: number;
+  solicitante: string;
 }

@@ -9,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { CreatePDF } from "@/lib/create-pdf";
 import type { Placa } from "@/lib/types";
 import { ArrowLeft, ArrowRight } from "lucide-react";
@@ -21,6 +22,7 @@ export interface PageToVizuProps {
 }
 
 export default function PageToVizu({ values, executeFetch }: PageToVizuProps) {
+  const [name, setName] = React.useState<string>();
   const [currentPage, setCurrentPage] = React.useState(0);
   const itemsPerPage = 6;
 
@@ -29,6 +31,7 @@ export default function PageToVizu({ values, executeFetch }: PageToVizuProps) {
       imgUrl: field.imgUrl || "",
       name: field.name || "Nome do Beneficiado",
       key: field.key || "Chave Pix",
+      solicitante: field.solicitante || "Nome do Solicitante",
     }))
   );
 
@@ -51,28 +54,36 @@ export default function PageToVizu({ values, executeFetch }: PageToVizuProps) {
   };
 
   const handleCreatePdf = () => {
-    CreatePDF(values, handleUpdate);
+    CreatePDF(values, handleUpdate, name as string);
   };
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Veja como ficará a sua placa</CardTitle>
+        <CardTitle>Dê um nome para a placa</CardTitle>
         <CardDescription>
-          Verifique ao lado os dados inseridos. Página {currentPage + 1} de{" "}
-          {totalPages}.
+          <Input
+            value={name}
+            type="text"
+            placeholder="Qual o nome da placa?"
+            onChange={(e) => setName(e.target.value)}
+          />
         </CardDescription>
       </CardHeader>
       <CardContent className="w-[450px] h-[650px] bg-white grid grid-cols-2 gap-4 justify-around py-4">
         {platesToShow.map((plate, index) => (
-          <div
-            key={index}
-            className="aspect-square border border-black flex flex-col py-2 items-center justify-center"
-          >
-            <Image src={plate.imgUrl} alt="Plate" width={145} height={145} />
-            <div className="flex flex-col text-center">
-              <span className="text-[10px] text-black">{plate.name}</span>
-              <span className="text-[10px] text-black">{plate.key}</span>
+          <div key={index} className="flex flex-col gap-0.5 w-full">
+            <span className="text-[8px] text-center">{plate.solicitante}</span>
+            <div className="aspect-square border border-black flex flex-col py-2 items-center justify-center">
+              <Image src={plate.imgUrl} alt="Plate" width={145} height={145} />
+              <div className="flex flex-col">
+                <span className="text-[9px] text-black">
+                  Nome: {plate.name}
+                </span>
+                <span className="text-[9px] text-black">
+                  Chave: {plate.key}
+                </span>
+              </div>
             </div>
           </div>
         ))}
@@ -85,8 +96,9 @@ export default function PageToVizu({ values, executeFetch }: PageToVizuProps) {
           onClick={() => handleCreatePdf()}
           type="button"
           className="w-full"
+          disabled={!name}
         >
-          Imprimir
+          {name ? "Criar PDF" : "Insira o nome da placa"}
         </Button>
         <Button
           onClick={handleNextPage}

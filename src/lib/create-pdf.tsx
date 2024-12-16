@@ -2,7 +2,11 @@ import { PDFDocument, rgb } from "pdf-lib";
 import type { Placa } from "./types";
 import { SavePdfBase64 } from "@/app/_actions";
 
-export async function CreatePDF(values: Placa, onCreate: () => void) {
+export async function CreatePDF(
+  values: Placa,
+  onCreate: () => void,
+  name: string
+) {
   const pdfDoc = await PDFDocument.create();
 
   const A4_WIDTH = 595.28;
@@ -76,6 +80,15 @@ export async function CreatePDF(values: Placa, onCreate: () => void) {
       const textSize = 10; // Tamanho do texto para ambos
       const textYPosition = y - squareSize + margin + 35; // Posição base para textos
 
+      if (field.solicitante) {
+        page.drawText(`Solicitante: ${field.solicitante}`, {
+          x: x + squareSize / 20,
+          y: y + 5, // Acima do QR code com espaçamento de 0.5
+          size: textSize,
+          color: rgb(0, 0, 0),
+        });
+      }
+
       // Desenhar o nome
       if (field.name) {
         page.drawText(`Nome: ${field.name}`, {
@@ -108,7 +121,7 @@ export async function CreatePDF(values: Placa, onCreate: () => void) {
   const pdfBase64 = btoa(binaryString);
 
   // Agora salve o PDF em Base64 no banco de dados usando o Prisma
-  const save = await SavePdfBase64(pdfBase64); // Salvar a string Base64
+  const save = await SavePdfBase64(pdfBase64, name); // Salvar a string Base64
 
   if (save) {
     onCreate();

@@ -28,12 +28,22 @@ import { GetPlacasCriadas } from "./_actions";
 export type Placas = {
   placa: string;
   createdAt: Date;
+  name: string;
 };
 
 export default function Home() {
   const { control, handleSubmit, register, setValue } = useForm({
     defaultValues: {
-      fields: [{ imgUrl: "", qrCodeText: "", name: "", key: "", qtd: 0 }],
+      fields: [
+        {
+          imgUrl: "",
+          qrCodeText: "",
+          name: "",
+          key: "",
+          qtd: 0,
+          solicitante: "",
+        },
+      ],
     },
   });
 
@@ -81,7 +91,7 @@ export default function Home() {
       }
     };
 
-    reader.readAsDataURL(file); // Converte o arquivo para base64
+    reader.readAsDataURL(file);
   };
 
   const handleRemove = (index: number) => {
@@ -161,6 +171,12 @@ export default function Home() {
                   defaultValue={0}
                   {...register(`fields.${index}.qtd`)}
                 />
+                <Input
+                  type="text"
+                  required
+                  placeholder="Nome do Solicitante"
+                  {...register(`fields.${index}.solicitante`)}
+                />
                 <Button
                   type="button"
                   onClick={() => handleRemove(index)}
@@ -186,6 +202,7 @@ export default function Home() {
                   name: "",
                   key: "",
                   qtd: 0,
+                  solicitante: "",
                 })
               }
               type="button"

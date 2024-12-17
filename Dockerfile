@@ -25,11 +25,13 @@ WORKDIR /app
 # Copiar arquivos da etapa anterior
 COPY --from=builder /app/.next .next
 COPY --from=builder /app/package.json .
+COPY --from=builder /app/prisma ./prisma   # Copiar a pasta do Prisma
+COPY --from=builder /app/node_modules ./node_modules  # Copiar dependências instaladas
 
 # Instalar apenas dependências de produção
 RUN npm install --production
 
-# Expor a porta 3000
+# Expor a porta 80 (ajuste conforme necessário)
 EXPOSE 80
 
 # Comando para iniciar o servidor

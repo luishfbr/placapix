@@ -1,66 +1,36 @@
-FROM node:20-alpine AS base
+# Etapa 1: Build
+FROM node:18-alpine AS builder
 
-
-
-### Dependencies ###
-FROM base AS deps
-RUN apk add --no-cache libc6-compat git
-
-
-
-# Setup pnpm environment
-ENV PNPM_HOME="/pnpm"
-ENV PATH="$PNPM_HOME:$PATH"
-RUN corepack enable
-RUN corepack prepare pnpm@latest --activate
-
+# Definir diretório de trabalho no container
 WORKDIR /app
 
-COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile --prefer-frozen-lockfile
+# Copiar apenas os arquivos necessários para instalação
+COPY package.json package-lock.json ./ 
 
-# Builder
-FROM base AS builder
+# Instalar dependências
+RUN npm install
 
-RUN corepack enable
-RUN corepack prepare pnpm@latest --activate
-
-WORKDIR /app
-
-COPY --from=deps /app/node_modules ./node_modules
+# Copiar o restante do código da aplicação
 COPY . .
-RUN pnpm build
 
+# Construir o projeto Next.js
+RUN npm run build
 
-### Production image runner ###
-FROM base AS runner
+# Etapa 2: Run (Imagem final)
+FROM node:18-alpine
 
-# Set NODE_ENV to production
-ENV NODE_ENV production
+# Definir diretório de trabalho no container
+WORKDIR /app
 
-# Disable Next.js telemetry
-# Learn more here: https://nextjs.org/telemetry
-ENV NEXT_TELEMETRY_DISABLED 1
+# Copiar arquivos da etapa anterior
+COPY --from=builder /app/.next .next
+COPY --from=builder /app/package.json .
 
-# Set correct permissions for nextjs user and don't run as root
-RUN addgroup nodejs
-RUN adduser -SDH nextjs
-RUN mkdir .next
-RUN chown nextjs:nodejs .next
+# Instalar apenas dependências de produção
+RUN npm install --production
 
-# Automatically leverage output traces to reduce image size
-# https://nextjs.org/docs/advanced-features/output-file-tracing
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-COPY --from=builder --chown=nextjs:nodejs /app/public ./public
-
-USER nextjs
-
-# Exposed port (for orchestrators and dynamic reverse proxies)
+# Expor a porta 3000
 EXPOSE 80
-ENV PORT 80
-ENV HOSTNAME "0.0.0.0"
-HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 CMD [ "wget", "-q0", "http://localhost:80/health" ]
 
-# Run the nextjs app
-CMD ["node", "server.js"]
+# Comando para iniciar o servidor
+CMD ["npm", "start"]

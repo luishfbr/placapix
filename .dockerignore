@@ -1,8 +1,13 @@
-Dockerfile
 .dockerignore
+
+# Not needed as we are bundling the whole app
 node_modules
-npm-debug.log
-README.md
-.env*
+# Log files
+logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 .next
 .git
